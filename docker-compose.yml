@@ -1,0 +1,28 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.backend
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend/data:/app/data
+    environment:
+      - DEFAULT_CHUNK_SIZE=500
+      - DEFAULT_CHUNK_OVERLAP=50
+      - DEFAULT_TOP_K=4
+      - DEFAULT_EMBEDDING_MODEL=all-MiniLM-L6-v2
+      - DEFAULT_LLM_PROVIDER=mock
+
+  frontend:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:8000
+    depends_on:
+      - backend
