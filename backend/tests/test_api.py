@@ -1,5 +1,9 @@
 from fastapi.testclient import TestClient
+from database.database import init_db
 from main import app
+
+# Initialize DB tables for testing
+init_db()
 
 client = TestClient(app)
 
