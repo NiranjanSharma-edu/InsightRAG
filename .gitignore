@@ -21,3 +21,10 @@ frontend/out/
 frontend/build/
 .DS_Store
 *.log
+
+# Environments and Secrets
+.env
+.env.production
+.env.local
+.env.*.local
+

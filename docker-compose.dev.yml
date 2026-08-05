@@ -1,0 +1,64 @@
+version: '3.8'
+
+services:
+  backend:
+    container_name: insightrag-backend-dev
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.backend.dev
+    ports:
+      - "${BACKEND_PORT:-8000}:8000"
+    volumes:
+      - ./backend:/app
+      - ./backend/data:/app/data
+    env_file:
+      - .env
+      - .env.development
+    environment:
+      - WATCHFILES_FORCE_POLLING=${WATCHFILES_FORCE_POLLING:-true}
+    restart: unless-stopped
+    networks:
+      - insightrag-dev
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/healthz', timeout=5)"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  frontend:
+    container_name: insightrag-frontend-dev
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.frontend.dev
+    ports:
+      - "${FRONTEND_PORT:-3000}:3000"
+    volumes:
+      - ./frontend:/app
+      # Anonymous volumes to prevent host dependencies/cache overriding container dependencies/cache
+      - /app/node_modules
+      - /app/.next
+    env_file:
+      - .env
+      - .env.development
+    environment:
+      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://localhost:8000}
+      - WATCHPACK_POLLING=${WATCHPACK_POLLING:-true}
+      - CHOKIDAR_USEPOLLING=${CHOKIDAR_USEPOLLING:-true}
+      - HOST=0.0.0.0
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - insightrag-dev
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+
+networks:
+  insightrag-dev:
+    name: insightrag-dev

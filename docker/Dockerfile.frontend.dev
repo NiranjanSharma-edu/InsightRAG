@@ -1,0 +1,15 @@
+FROM node:18-alpine
+
+WORKDIR /app
+
+# Copy package descriptors first to leverage Docker build cache
+COPY frontend/package*.json ./
+RUN npm install
+
+# Copy source code (fallback, will be overridden by bind mount in dev compose)
+COPY frontend/ .
+
+EXPOSE 3000
+
+# Start Next.js development server
+CMD ["npm", "run", "dev"]

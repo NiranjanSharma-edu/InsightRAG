@@ -8,6 +8,11 @@ from models.schemas import HealthCheckSchema
 
 router = APIRouter(tags=["health"])
 
+@router.get("/healthz")
+def healthz():
+    """Lightweight health check endpoint returning status ok."""
+    return {"status": "ok"}
+
 @router.get("/health", response_model=HealthCheckSchema)
 def health_check(db: Session = Depends(get_db)):
     """Health check endpoint to verify system status, DB connection, and vector index size."""
@@ -26,3 +31,4 @@ def health_check(db: Session = Depends(get_db)):
         vector_store_indexed=vector_indexed,
         llm_provider=settings.get("llm_provider", "mock")
     )
+

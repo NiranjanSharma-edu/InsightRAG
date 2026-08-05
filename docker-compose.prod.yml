@@ -1,0 +1,51 @@
+version: '3.8'
+
+services:
+  backend:
+    container_name: insightrag-backend-prod
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.backend.prod
+    ports:
+      - "${BACKEND_PORT:-8000}:8000"
+    volumes:
+      - ./backend/data:/app/data
+    env_file:
+      - .env
+      - .env.production
+    restart: always
+    networks:
+      - insightrag-prod
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/healthz', timeout=5)"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  frontend:
+    container_name: insightrag-frontend-prod
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.frontend.prod
+    ports:
+      - "${FRONTEND_PORT:-3000}:3000"
+    env_file:
+      - .env
+      - .env.production
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: always
+    networks:
+      - insightrag-prod
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+
+networks:
+  insightrag-prod:
+    name: insightrag-prod

@@ -1,0 +1,21 @@
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Install system build dependencies for PyMuPDF & FAISS
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    libgomp1 \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy requirements first to leverage Docker cache
+COPY backend/requirements.txt .
+RUN pip install --no-cache-dir --default-timeout=1000 -r requirements.txt
+
+# Copy source code (fallback, will be overridden by bind mount in dev compose)
+COPY backend/ .
+
+EXPOSE 8000
+
+# Start with auto-reload enabled
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]

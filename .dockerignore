@@ -1,0 +1,42 @@
+# Version Control
+.git
+.gitignore
+
+# Frontend Build and Dependency folders
+node_modules/
+.next/
+out/
+build/
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+frontend/build/
+
+# Backend Build, cache and Dependency folders
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+venv/
+backend/venv/
+backend/__pycache__/
+backend/.pytest_cache/
+
+# Databases and Local Storage (ignore local persistence)
+backend/data/
+*.db
+*.index
+
+# Local Environment and Secrets Configuration files
+.env
+.env.production
+.env.local
+.env.*.local
+
+# OS Metadata and IDE files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+docs/

@@ -98,6 +98,69 @@ Visit [http://localhost:3000](http://localhost:3000) in your browser.
 
 ---
 
+## 🛠️ Development Workflow
+
+The local development environment uses Docker Compose with **Hot Reloading** enabled for both the frontend (Next.js Fast Refresh) and backend (FastAPI / Uvicorn reload). You don't have to rebuild the containers when editing code.
+
+### 1. Initial Setup
+A template environment file `.env.example` is provided in the root directory.
+The startup scripts will automatically copy `.env.example` to `.env` if it does not already exist. You can populate `.env` with your LLM provider API keys:
+- `OPENAI_API_KEY`
+- `GROQ_API_KEY`
+- `GEMINI_API_KEY`
+
+### 2. Development Commands
+You can start the development server using the helper scripts:
+
+**For Windows (PowerShell):**
+```powershell
+.\scripts\dev.ps1
+```
+
+**For Unix (Linux/macOS/Git Bash):**
+```bash
+./scripts/dev.sh
+```
+
+These scripts will spin up the development containers in the foreground. If you need to force-rebuild the containers (e.g., after updating dependencies), pass the build flag:
+- PowerShell: `.\scripts\dev.ps1 -Build`
+- Bash: `./scripts/dev.sh --build` (or `-b`)
+
+Alternatively, you can run Docker Compose directly:
+```bash
+docker compose -f docker-compose.dev.yml up
+```
+
+### 3. Folder Structure & Environment Strategy
+The Docker refactor introduces a clean separation between development and production configurations:
+* `docker/`
+  * `Dockerfile.backend.dev`: Development backend Dockerfile (uses uvicorn reload).
+  * `Dockerfile.backend.prod`: Production backend Dockerfile (no reload, lightweight).
+  * `Dockerfile.frontend.dev`: Development frontend Dockerfile (npm install/run dev).
+  * `Dockerfile.frontend.prod`: Production frontend Dockerfile (production node build).
+* `docker-compose.dev.yml`: Configured for developers with directory mounting, explicit container names, named networks, healthchecks, and polling enabled for file watching.
+* `docker-compose.prod.yml`: Matches production deployments with restart always policies and container isolation.
+* `.dockerignore`: Root-level ignore file to keep local dependency modules and database files out of Docker context.
+* Environment files:
+  * `.env`: Holds developer-specific keys (uncommitted).
+  * `.env.development`: Holds development configurations (committed).
+  * `.env.production`: Holds production configurations (uncommitted).
+
+### 4. Hot Reload Behavior
+- **Backend (FastAPI)**: On Windows hosts, file events inside Docker bind-mounts might not propagate. To address this, the environment parameter `WATCHFILES_FORCE_POLLING=true` is automatically set in development. This forces `watchfiles` to poll the backend source directory, guaranteeing immediate reload when you save a python file.
+- **Frontend (Next.js)**: Similarly, `WATCHPACK_POLLING=true` and `CHOKIDAR_USEPOLLING=true` are configured to force Next.js Webpack 5 development watchpack to check files periodically. Editing any UI component triggers Fast Refresh instantly.
+
+### 5. Troubleshooting & Rebuilds
+- **When is a Docker rebuild actually required?**
+  - If you add or change dependencies in `backend/requirements.txt`.
+  - If you add or change packages in `frontend/package.json`.
+  - If you change any files inside the `docker/` folder (such as Dockerfiles).
+  - *In these cases, run the startup script with the build parameter (e.g. `-Build` or `--build`).*
+- **Database/Storage Persistence**:
+  - The SQLite database, uploaded PDFs, and FAISS index are mounted directly from the host at `./backend/data`. Stopping or recreating the containers will not delete your indexed documents or chat history.
+
+---
+
 ## 🧪 Running Automated Tests
 
 Verify core RAG functions, FAISS indexing, PDF parsing, and API endpoints:
