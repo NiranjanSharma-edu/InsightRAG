@@ -1,4 +1,4 @@
-# Python
+# Python Cache and Environments
 __pycache__/
 *.py[cod]
 *$py.class
@@ -9,22 +9,36 @@ venv/
 ENV/
 .pytest_cache/
 
-# Data & SQLite DB
-backend/data/
-*.db
-*.index
-
-# Node / Next.js
+# Node / Next.js Build and Dependencies
 node_modules/
+frontend/node_modules/
+.next/
 frontend/.next/
 frontend/out/
 frontend/build/
-.DS_Store
-*.log
 
-# Environments and Secrets
+# Application Local Storage & Model Caches
+backend/data/
+backend/cache/
+*.db
+*.index
+
+# Environments and Local Secrets
 .env
 .env.production
+.env.development.local
+.env.production.local
 .env.local
 .env.*.local
 
+# OS Metadata & Logs
+.DS_Store
+Thumbs.db
+*.log
+
+# IDE & Editor Configuration
+.vscode/
+.idea/
+*.suo
+*.sln
+*.njsproj

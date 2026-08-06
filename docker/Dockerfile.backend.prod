@@ -1,18 +1,72 @@
-FROM python:3.11-slim
+# Stage 1: Build dependencies
+FROM python:3.12-slim AS builder
 
 WORKDIR /app
 
-# Install system build dependencies for PyMuPDF & FAISS
+# Install system build dependencies (GCC, OpenMP, etc.)
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     libgomp1 \
     && rm -rf /var/lib/apt/lists/*
 
 COPY backend/requirements.txt .
-RUN pip install --no-cache-dir --default-timeout=1000 -r requirements.txt
 
-COPY backend/ .
+# Use BuildKit cache mount to cache PyTorch CPU package
+RUN --mount=type=cache,target=/root/.cache/pip \
+    pip install torch --index-url https://download.pytorch.org/whl/cpu
+
+# Filter out testing libraries (pytest) for a production-only footprint
+RUN grep -v "pytest" requirements.txt > requirements-prod.txt
+
+# Use BuildKit cache mount to install other python dependencies
+RUN --mount=type=cache,target=/root/.cache/pip \
+    pip install --default-timeout=1000 -r requirements-prod.txt
+
+# Stage 2: Final runner
+FROM python:3.12-slim AS runner
+
+# OCI Image Metadata
+LABEL org.opencontainers.image.title="InsightRAG Backend" \
+      org.opencontainers.image.description="InsightRAG Production API Backend Service" \
+      org.opencontainers.image.version="1.0.0" \
+      org.opencontainers.image.source="https://github.com/NiranjanSharma-edu/InsightRAG" \
+      org.opencontainers.image.maintainer="Niranjan Sharma" \
+      org.opencontainers.image.licenses="MIT"
+
+WORKDIR /app
+
+# Install runtime OpenMP support needed by FAISS
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libgomp1 \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create a non-root system user and group
+RUN groupadd -g 10001 backend && \
+    useradd -u 10001 -g backend -m -d /home/backend -s /bin/bash backend
+
+# Pre-create directory paths and apply ownership to backend user
+RUN mkdir -p /app/data /app/cache && \
+    chown -R backend:backend /app/data /app/cache
+
+# Copy pre-compiled dependencies and executables from builder
+COPY --from=builder /usr/local/lib/python3.12/site-packages /usr/local/lib/python3.12/site-packages
+COPY --from=builder /usr/local/bin /usr/local/bin
+
+# Copy app source code and adjust ownership
+COPY --chown=backend:backend backend/ .
+
+# Direct Hugging Face model downloads to the persistent cache directory
+ENV HF_HOME=/app/cache/huggingface \
+    SENTENCE_TRANSFORMERS_HOME=/app/cache/huggingface \
+    PYTHONUNBUFFERED=1
+
+USER backend
 
 EXPOSE 8000
 
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Docker healthcheck that queries the lightweight healthz endpoint dynamically
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+    CMD python -c "import os, urllib.request; urllib.request.urlopen('http://localhost:' + os.environ.get('PORT', '8000') + '/healthz', timeout=5)"
+
+# Start uvicorn dynamically binding to Railway assigned port (fallback to 8000)
+CMD ["sh", "-c", "uvicorn main:app --host 0.0.0.0 --port ${PORT:-8000}"]

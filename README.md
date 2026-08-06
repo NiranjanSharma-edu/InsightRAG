@@ -1,178 +1,252 @@
-# InsightRAG – AI Research & Document Assistant
+# InsightRAG
 
-[![FastAPI](https://img.shields.io/badge/FastAPI-0.109.0-009688.svg?style=flat&logo=FastAPI&logoColor=white)](https://fastapi.tiangolo.com/)
-[![Next.js](https://img.shields.io/badge/Next.js-15-000000.svg?style=flat&logo=Next.js&logoColor=white)](https://nextjs.org/)
-[![FAISS](https://img.shields.io/badge/FAISS-CPU-blue.svg)](https://github.com/facebookresearch/faiss)
-[![Sentence Transformers](https://img.shields.io/badge/SentenceTransformers-all--MiniLM--L6--v2-orange.svg)](https://www.sbert.net/)
-[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+<p align="center">
+  <strong>AI-powered Retrieval-Augmented Generation (RAG) platform built with FastAPI, Next.js, Docker, and modern DevOps practices.</strong>
+</p>
 
-**InsightRAG** is a production-grade, modular Retrieval-Augmented Generation (RAG) system built from scratch to query dense technical PDF documents with natural language and receive grounded answers backed by exact page-level citations.
-
----
-
-## 🌟 Key Features
-
-- **Document Parsing**: Fast PDF text extraction preserving exact 1-indexed page boundaries via `PyMuPDF` (`fitz`).
-- **Configurable Sliding Window Chunking**: Isolated `TextChunker` module supporting custom chunk sizes and character overlaps.
-- **Dense Vector Embeddings**: Local text embedding generation with `SentenceTransformers` (`all-MiniLM-L6-v2`, 384-dim).
-- **FAISS Vector Search**: `IndexFlatIP` Cosine Similarity index management with metadata mapping and disk persistence.
-- **Grounded Citation Engine**: Interactively view exact source document name, page number, and chunk snippet preview modal for every answer.
-- **Multi-Provider LLM Engine**: Seamlessly switch between **OpenAI**, **Groq (Llama-3)**, **Google Gemini**, **Ollama**, and a **Built-in Offline Provider** (works out-of-the-box without API keys).
-- **SaaS UI Aesthetic**: Modern Next.js 15 interface built with Tailwind CSS, Lucide icons, dark mode, and micro-animations.
+<p align="center">
+  <!-- Static Badges -->
+  <img src="https://img.shields.io/badge/Python-3.12-blue?style=flat&logo=python&logoColor=white" alt="Python 3.12" />
+  <img src="https://img.shields.io/badge/FastAPI-0.109+-009688?style=flat&logo=fastapi&logoColor=white" alt="FastAPI" />
+  <img src="https://img.shields.io/badge/Next.js-20-000000?style=flat&logo=next.js&logoColor=white" alt="Next.js" />
+  <img src="https://img.shields.io/badge/Docker-Compatible-2496ED?style=flat&logo=docker&logoColor=white" alt="Docker" />
+  <img src="https://img.shields.io/badge/License-MIT-green?style=flat" alt="MIT License" />
+  <img src="https://img.shields.io/github/last-commit/NiranjanSharma-edu/InsightRAG" alt="Last Commit" />
+  <img src="https://img.shields.io/github/stars/NiranjanSharma-edu/InsightRAG?style=social" alt="Stars" />
+</p>
 
 ---
 
-## 🏗️ Project Architecture
-
-```
-insight-rag/
-├── backend/
-│   ├── api/                 # FastAPI routers (documents, chat, settings, health)
-│   ├── core/                # Central config and structured logging
-│   ├── database/            # SQLite engine, models, session manager
-│   ├── models/              # Pydantic schemas
-│   ├── rag/                 # Core RAG pipeline modules
-│   │   ├── loader.py        # PyMuPDF PDF loader & cleaner
-│   │   ├── chunker.py       # Sliding window recursive text chunker
-│   │   ├── embeddings.py    # SentenceTransformers embedding service
-│   │   ├── vector_store.py  # FAISS index management & persistence
-│   │   ├── retriever.py     # Similarity search pipeline
-│   │   ├── prompt_builder.py# Grounded context prompt builder
-│   │   └── generator.py     # Multi-provider LLM generator (OpenAI, Groq, Gemini, Ollama, Mock)
-│   ├── services/            # Document processing & deletion services
-│   ├── tests/               # Pytest suite (loader, chunker, vector store, API)
-│   └── main.py              # FastAPI app entrypoint
-│
-├── frontend/                # Next.js 15 App Router Frontend
-│   ├── src/
-│   │   ├── app/             # Page routes (/, /upload, /chat, /settings, /about)
-│   │   ├── components/      # Reusable UI components (Navbar, Cards, Modals)
-│   │   └── lib/             # Typed API client for FastAPI
-├── docker/                  # Dockerfiles for Backend and Frontend
-├── docs/                    # Architecture diagrams and Learning Notes / Interview Q&A
-└── docker-compose.yml       # Single-command spin up
+## 📈 Deployed Status & CI/CD Placeholders
+*Note: The following pipeline status integrations will be enabled dynamically after subsequent phases:*
+```text
+[Build Status Badge Placeholder]  [Container Registry Push Badge Placeholder]  [Railway Deployment Status Badge Placeholder]  [Security Scan Status Badge Placeholder]
 ```
 
 ---
 
-## ⚡ Quick Start
+## 📖 Overview
 
-### Option 1: Docker Compose (Recommended)
-
-Run the entire application in containerized mode with one command:
-
-```bash
-docker-compose up --build
-```
-
-- **Frontend**: [http://localhost:3000](http://localhost:3000)
-- **Backend Swagger Docs**: [http://localhost:8000/docs](http://localhost:8000/docs)
+InsightRAG is a production-grade, modular Retrieval-Augmented Generation (RAG) platform designed to ingest complex technical PDFs, chunk text using sliding windows, generate vector embeddings, and search them via cosine similarity. It provides natural language chatbot interactions with grounded context, backed by exact page-level source citations.
 
 ---
 
-### Option 2: Local Manual Setup
+## 🖥️ Demo & Screenshots
 
-#### 1. Backend Setup
+Below are placeholders for the UI interfaces and visualizations. Refer to [docs/images/README.md](file:///c:/Users/hp5cd/Desktop/rag/docs/images/README.md) for local file mapping:
 
-```bash
-cd backend
-python -m venv venv
-# On Windows:
-venv\Scripts\activate
-# On Linux/macOS:
-source venv/bin/activate
+| Interface | Visualization |
+| :--- | :--- |
+| **Main Dashboard & Uploads** | ![Dashboard Placeholder](docs/images/homepage.png)<br>*Enables drag-and-drop document uploads and status tracking.* |
+| **Document Chatbot** | ![Chat interface Placeholder](docs/images/chat.png)<br>*Conversational AI querying with grounded inline citations and source snippet modals.* |
+| **Document Management** | ![Uploads Management Placeholder](docs/images/upload.png)<br>*View processing statuses, index summaries, and delete documents.* |
 
-pip install -r requirements.txt
-uvicorn main:app --reload --port 8000
+---
+
+## ✨ Features
+
+### Product Features
+- ✓ **Instant Document Parsing**: Ingests multi-page PDFs, preserving exact 1-indexed page boundaries for accurate referencing.
+- ✓ **Slide Window Chunker**: Implements configurable text splitting with custom overlaps to maintain semantic continuity.
+- ✓ **Dense Vector Embedding**: Embeds chunks locally using the optimized `all-MiniLM-L6-v2` transformer model.
+- ✓ **Cos-Similarity Vector Indexing**: Manages vector space flat indices with metadata mappings and disk persistence.
+- ✓ **Multi-Provider LLM Integration**: Supports **OpenAI**, **Groq (Llama 3)**, **Google Gemini**, **Ollama**, and a **Built-in Offline Provider** for out-of-the-box operation.
+- ✓ **Modern SaaS UI**: Implements a clean web dashboard with dark mode support, drag-and-drop file inputs, and interactive components.
+
+### Engineering Features
+- ✓ **Multi-Stage Production Builds**: Uses lean runner images to compile and export assets while isolating compiler tools.
+- ✓ **Python 3.12 & Node 20 Upgrades**: Runs on modern language runtimes for runtime speed improvements.
+- ✓ **Non-Root Execution**: Runs all services under restricted system users (`backend` and `nextjs`) for container hardening.
+- ✓ **BuildKit Dependency Caching**: Speeds up GHA/local builds using pip and npm BuildKit cache mounts.
+- ✓ **Model Cache Persistence**: Resolves startup cold-starts by loading Hugging Face models from local volume mounts.
+- ✓ **Dynamic Port Binding**: Auto-detects and binds ports at boot to comply with Railway container assignments.
+- ✓ **Container Health Checks**: Features inline container health checks for liveness and readiness monitoring.
+- ✓ **Development Hot-Reloading**: Provides synchronized development containers with polling-based hot reload.
+
+---
+
+## 🏗️ Architecture
+
+InsightRAG is split into isolated services running within a Docker network. Persistent state is volume-mounted to preserve databases, FAISS vector indices, and Hugging Face model downloads.
+
+```mermaid
+graph TD
+    User([Client Browser])
+    
+    subgraph Docker Network: insightrag-prod
+        subgraph Frontend Container: Next.js Node 20-alpine
+            App[Next.js App Router UI]
+            Client[API Client Utility]
+        end
+        
+        subgraph Backend Container: FastAPI Python 3.12-slim
+            API[FastAPI Router]
+            Loader[PyMuPDF Loader]
+            Chunker[Sliding Window Chunker]
+            Embed[SentenceTransformers Embedder]
+            Retriever[FAISS Similarity Search]
+            Generator[LLM Generation Engine]
+        end
+    end
+    
+    subgraph Host Volumes / External APIs
+        DataVol[(SQLite DB / FAISS Store: /app/data)]
+        CacheVol[(Hugging Face Cache: /app/cache)]
+        LLMAPIs{External LLM Providers}
+    end
+
+    User -->|HTTP/JSON| App
+    App --> Client
+    Client -->|API Port 8000| API
+    
+    API --> Loader
+    Loader --> Chunker
+    Chunker --> Embed
+    
+    Embed -->|Check Local Models| CacheVol
+    Embed --> Retriever
+    
+    Retriever -->|Read/Write Indices| DataVol
+    API -->|Write metadata| DataVol
+    
+    Retriever --> Generator
+    Generator -->|Query Responses| LLMAPIs
+    
+    classDef container fill:#f9f,stroke:#333,stroke-width:2px;
+    classDef volume fill:#bbf,stroke:#333,stroke-width:2px;
+    class App,API container;
+    class DataVol,CacheVol volume;
 ```
 
-#### 2. Frontend Setup
+---
 
-```bash
-cd frontend
-npm install
-npm run dev
+## 🛠️ Technology Stack
+
+| Layer | Technology | Purpose |
+| :--- | :--- | :--- |
+| **Frontend** | Next.js 14.2.5 (React 18 / TypeScript) | Component-driven user interface and API caller. |
+| **Styling** | Tailwind CSS | Utility-first custom design theme and animations. |
+| **Backend** | FastAPI (Python 3.12) | REST API endpoints, async handlers, and database interfaces. |
+| **Database** | SQLite & SQLAlchemy | Persistent store for document metadata and processing states. |
+| **PDF Extraction**| PyMuPDF (fitz) | Fast page-by-page text parser. |
+| **Embeddings** | SentenceTransformers (all-MiniLM-L6-v2) | Local 384-dimensional dense semantic embedding generation. |
+| **Vector Store** | FAISS-CPU (Facebook AI Similarity Search) | Cosine similarity index management and storage. |
+| **Containerization**| Docker & Docker Compose | Uniform runtime packaging for development and production. |
+
+---
+
+## 📂 Project Structure
+
+Below is an overview of the key directories in the repository:
+
+```text
+insightrag/
+ ├── .github/
+ │    ├── ISSUE_TEMPLATE/    # GitHub Issue Markdown forms (bugs, features, Q&A)
+ │    ├── CODEOWNERS         # Core repository review assignment settings
+ │    └── pull_request_template.md # PR formatting template
+ ├── backend/
+ │    ├── api/               # FastAPI routers (chat, upload, settings, health)
+ │    ├── cache/             # Local volume mount for Hugging Face cache (Git ignored)
+ │    ├── core/              # Central configuration and structured log setup
+ │    ├── database/          # SQLite database connection and structures
+ │    ├── models/            # Pydantic validation schemas
+ │    ├── rag/               # Core pipeline modules (chunker, retriever, generator)
+ │    └── tests/             # Pytest automated testing suite
+ ├── frontend/
+ │    ├── src/
+ │    │    ├── app/          # Next.js App Router routing layouts
+ │    │    ├── components/   # UI layouts (Cards, Upload inputs, Chat dialogue modals)
+ │    │    └── lib/          # Typed API helper client
+ │    └── next.config.js     # Next.js server configuration (standalone output)
+ ├── docker/
+ │    ├── Dockerfile.backend.dev # Backend development build (reload enabled)
+ │    ├── Dockerfile.backend.prod # Backend production build (multi-stage)
+ │    ├── Dockerfile.frontend.dev # Frontend development build (npm dev run)
+ │    └── Dockerfile.frontend.prod # Frontend production build (Next.js standalone)
+ ├── docs/
+ │    ├── images/            # Documentation images and screenshots
+ │    ├── architecture.md    # API and ingestion architecture deep-dive
+ │    └── learning_notes.md  # Vector database, math, and chunking trade-offs
+ ├── docker-compose.dev.yml  # Dev compose setup with hot-reloading
+ └── docker-compose.prod.yml # Production compose configuration
 ```
 
-Visit [http://localhost:3000](http://localhost:3000) in your browser.
+---
+
+## ⚡ Getting Started
+
+Ensure you have [Docker](https://www.docker.com/) installed on your machine.
+
+### Single-Command Start (Production Mode)
+
+1. Create a `.env` file in the root directory based on the template:
+   ```bash
+   cp .env.example .env
+   ```
+2. Populate `.env` with your API keys (optional; the platform can run offline using the mock/offline engine).
+3. Start the production stack:
+   ```bash
+   docker compose -f docker-compose.prod.yml up -d
+   ```
+4. Access the applications:
+   - **Frontend**: [http://localhost:3000](http://localhost:3000)
+   - **Backend Documentation**: [http://localhost:8000/docs](http://localhost:8000/docs)
 
 ---
 
 ## 🛠️ Development Workflow
 
-The local development environment uses Docker Compose with **Hot Reloading** enabled for both the frontend (Next.js Fast Refresh) and backend (FastAPI / Uvicorn reload). You don't have to rebuild the containers when editing code.
+The local development environment is optimized for hot-reloading. File edits to Python backend files or Next.js components are detected immediately inside the containers via file poll-watchers.
 
-### 1. Initial Setup
-A template environment file `.env.example` is provided in the root directory.
-The startup scripts will automatically copy `.env.example` to `.env` if it does not already exist. You can populate `.env` with your LLM provider API keys:
-- `OPENAI_API_KEY`
-- `GROQ_API_KEY`
-- `GEMINI_API_KEY`
+- Start development mode:
+  - **Windows (PowerShell)**: `.\scripts\dev.ps1`
+  - **Unix (Bash)**: `./scripts/dev.sh`
+  - **Direct Command**: `docker compose -f docker-compose.dev.yml up`
+- Database, uploaded uploads, and indices are preserved under `./backend/data`.
 
-### 2. Development Commands
-You can start the development server using the helper scripts:
-
-**For Windows (PowerShell):**
-```powershell
-.\scripts\dev.ps1
-```
-
-**For Unix (Linux/macOS/Git Bash):**
-```bash
-./scripts/dev.sh
-```
-
-These scripts will spin up the development containers in the foreground. If you need to force-rebuild the containers (e.g., after updating dependencies), pass the build flag:
-- PowerShell: `.\scripts\dev.ps1 -Build`
-- Bash: `./scripts/dev.sh --build` (or `-b`)
-
-Alternatively, you can run Docker Compose directly:
-```bash
-docker compose -f docker-compose.dev.yml up
-```
-
-### 3. Folder Structure & Environment Strategy
-The Docker refactor introduces a clean separation between development and production configurations:
-* `docker/`
-  * `Dockerfile.backend.dev`: Development backend Dockerfile (uses uvicorn reload).
-  * `Dockerfile.backend.prod`: Production backend Dockerfile (no reload, lightweight).
-  * `Dockerfile.frontend.dev`: Development frontend Dockerfile (npm install/run dev).
-  * `Dockerfile.frontend.prod`: Production frontend Dockerfile (production node build).
-* `docker-compose.dev.yml`: Configured for developers with directory mounting, explicit container names, named networks, healthchecks, and polling enabled for file watching.
-* `docker-compose.prod.yml`: Matches production deployments with restart always policies and container isolation.
-* `.dockerignore`: Root-level ignore file to keep local dependency modules and database files out of Docker context.
-* Environment files:
-  * `.env`: Holds developer-specific keys (uncommitted).
-  * `.env.development`: Holds development configurations (committed).
-  * `.env.production`: Holds production configurations (uncommitted).
-
-### 4. Hot Reload Behavior
-- **Backend (FastAPI)**: On Windows hosts, file events inside Docker bind-mounts might not propagate. To address this, the environment parameter `WATCHFILES_FORCE_POLLING=true` is automatically set in development. This forces `watchfiles` to poll the backend source directory, guaranteeing immediate reload when you save a python file.
-- **Frontend (Next.js)**: Similarly, `WATCHPACK_POLLING=true` and `CHOKIDAR_USEPOLLING=true` are configured to force Next.js Webpack 5 development watchpack to check files periodically. Editing any UI component triggers Fast Refresh instantly.
-
-### 5. Troubleshooting & Rebuilds
-- **When is a Docker rebuild actually required?**
-  - If you add or change dependencies in `backend/requirements.txt`.
-  - If you add or change packages in `frontend/package.json`.
-  - If you change any files inside the `docker/` folder (such as Dockerfiles).
-  - *In these cases, run the startup script with the build parameter (e.g. `-Build` or `--build`).*
-- **Database/Storage Persistence**:
-  - The SQLite database, uploaded PDFs, and FAISS index are mounted directly from the host at `./backend/data`. Stopping or recreating the containers will not delete your indexed documents or chat history.
-
----
-
-## 🧪 Running Automated Tests
-
-Verify core RAG functions, FAISS indexing, PDF parsing, and API endpoints:
-
+To run automated tests locally:
 ```bash
 cd backend
+python -m venv venv
+source venv/bin/activate  # or activate.ps1
+pip install -r requirements.txt
 pytest -v
 ```
 
 ---
 
-## 📖 Technical Documentation & Learning Notes
+## 🚀 Production Optimization
 
-- **[Architecture Deep-Dive](docs/architecture.md)**: Detailed breakdown of the Indexing and Generation pipelines.
-- **[Interview Preparation & Learning Notes](docs/learning_notes.md)**: Frequently asked questions on vector math, chunking tradeoffs, PyMuPDF vs pypdf, and hallucination mitigation.
+The production images are engineered for speed, minimal size, and container security:
+1. **Multi-Stage Compilation**: Removes GCC compilers and node modules, packing only the static site and pre-compiled Python libraries.
+2. **CPU-only Optimization**: Drops PyTorch size by installing CPU-specific wheels, reducing backend footprint by **over 2 GB**.
+3. **Non-Root Execution**: Runs under system users with restricted security permissions inside alpine/slim runtimes.
+4. **Hugging Face Model Caching**: Saves model weights to `./backend/cache/huggingface` to ensure fast restarts and prevent model downloads on Railway scale-ups.
+
+---
+
+## 🗺️ Project Roadmap
+
+- [x] **Phase 1**: Local Development Setup (Hot Reloading, SQLite volumes)
+- [x] **Phase 2**: Production Docker Optimization (Multi-stage builds, CPU PyTorch, non-root users)
+- [x] **Phase 2.0.5**: Repository Hardening (Guidelines, templates, README redesign)
+- [ ] **Phase 2.1**: GitHub Actions (CI automated build tests)
+- [ ] **Phase 2.2**: GitHub Container Registry (Automated Docker pushes)
+- [ ] **Phase 2.3**: Railway Deployment (Production hosting integration)
+- [ ] **Phase 2.4**: Security & Monitoring (Auto-CVE scanning, logging)
+- [ ] **Phase 3**: Production Scaling (Distributed caches, PostgreSQL, dynamic index trees)
+
+---
+
+## 🤝 Contributing
+
+We welcome contributions! Please read our [CONTRIBUTING.md](file:///c:/Users/hp5cd/Desktop/rag/CONTRIBUTING.md) for details on code style, commit formatting, and the pull request submission process.
+
+Security vulnerabilities should be reported privately as described in our [SECURITY.md](file:///c:/Users/hp5cd/Desktop/rag/SECURITY.md).
+
+---
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](file:///c:/Users/hp5cd/Desktop/rag/LICENSE) file for details.

@@ -7,13 +7,13 @@ InsightRAG is an open-source, interview-ready Retrieval-Augmented Generation (RA
 ## 1. System Architecture Overview
 
 ```
-                                 FRONTEND (Next.js 15)
+                                 FRONTEND (Next.js 14)
                       ┌──────────────────────────────────────────┐
                       │  Landing | Upload | Chat | Settings | About│
                       └────────────────────┬─────────────────────┘
                                            │ REST API (JSON)
                                            ▼
-                                  BACKEND (FastAPI)
+                                   BACKEND (FastAPI)
       ┌────────────────────────────────────┴────────────────────────────────────┐
       │                                                                         │
       ▼                                                                         ▼
@@ -26,11 +26,20 @@ InsightRAG is an open-source, interview-ready Retrieval-Augmented Generation (RA
 │ 4. FAISS Vector Store    │                                       │ 4. Context Assembly      │
 │ 5. SQLite Metadata DB    │                                       │ 5. LLM Answer Engine     │
 └──────────────────────────┘                                       └──────────────────────────┘
+
+---
+
+## 2. Containerized Execution & Security Architecture
+
+InsightRAG is packaged using optimized Docker multi-stage builds ensuring isolation, high security, and minimal footprint:
+- **Runtimes**: FastAPI backend runs on `python:3.12-slim` and frontend runs on `node:20-alpine`.
+- **Privilege Separation**: Containers run under restricted, non-root users (`backend` and `nextjs`) conforming to the principle of least privilege.
+- **Persistent Storage Volumes**: SQLite databases and vector indices are mounted dynamically at `/app/data`. Model weights are persistent at `/app/cache/huggingface` to prevent dynamic Hugging Face hub API calls during restarts.
 ```
 
 ---
 
-## 2. Ingestion & Indexing Pipeline Flow
+## 3. Ingestion & Indexing Pipeline Flow
 
 1. **PDF Upload & Storage**:
    - PDF files uploaded via `POST /documents/upload` are stored in `backend/data/uploads/`.
@@ -54,7 +63,7 @@ InsightRAG is an open-source, interview-ready Retrieval-Augmented Generation (RA
 
 ---
 
-## 3. Retrieval & Generation Pipeline Flow
+## 4. Retrieval & Generation Pipeline Flow
 
 1. **User Query**: User submits question via `/chat` page.
 2. **Query Vector Encoding**: `EmbeddingService` generates 384D query vector.
