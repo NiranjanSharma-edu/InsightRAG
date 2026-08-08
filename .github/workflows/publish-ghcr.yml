@@ -1,0 +1,80 @@
+name: Publish Docker Images
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  publish:
+    name: Build and Publish Production Images
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Log in to GitHub Container Registry (GHCR)
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata for Backend
+        id: meta-backend
+        uses: docker/metadata-action@v6
+        with:
+          images: ghcr.io/niranjansharma-edu/insightrag-backend
+          tags: |
+            type=raw,value=latest
+            type=sha,prefix=sha-
+          labels: |
+            org.opencontainers.image.title=InsightRAG Backend
+            org.opencontainers.image.description=InsightRAG Production API Backend Service
+            org.opencontainers.image.source=https://github.com/NiranjanSharma-edu/InsightRAG
+            org.opencontainers.image.revision=${{ github.sha }}
+
+      - name: Build and Push Backend Image
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: docker/Dockerfile.backend.prod
+          push: true
+          tags: ${{ steps.meta-backend.outputs.tags }}
+          labels: ${{ steps.meta-backend.outputs.labels }}
+          cache-from: type=gha,scope=backend
+          cache-to: type=gha,mode=max,scope=backend
+
+      - name: Extract metadata for Frontend
+        id: meta-frontend
+        uses: docker/metadata-action@v6
+        with:
+          images: ghcr.io/niranjansharma-edu/insightrag-frontend
+          tags: |
+            type=raw,value=latest
+            type=sha,prefix=sha-
+          labels: |
+            org.opencontainers.image.title=InsightRAG Frontend
+            org.opencontainers.image.description=InsightRAG Next.js Web Interface
+            org.opencontainers.image.source=https://github.com/NiranjanSharma-edu/InsightRAG
+            org.opencontainers.image.revision=${{ github.sha }}
+
+      - name: Build and Push Frontend Image
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: docker/Dockerfile.frontend.prod
+          push: true
+          build-args: |
+            NEXT_PUBLIC_API_URL=http://localhost:8000
+          tags: ${{ steps.meta-frontend.outputs.tags }}
+          labels: ${{ steps.meta-frontend.outputs.labels }}
+          cache-from: type=gha,scope=frontend
+          cache-to: type=gha,mode=max,scope=frontend
