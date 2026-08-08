@@ -35,9 +35,10 @@ LABEL org.opencontainers.image.title="InsightRAG Backend" \
 
 WORKDIR /app
 
-# Install runtime OpenMP support needed by FAISS
+# Install runtime OpenMP support needed by FAISS and gosu for runtime permission handling
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libgomp1 \
+    gosu \
     && rm -rf /var/lib/apt/lists/*
 
 # Create a non-root system user and group
@@ -55,12 +56,21 @@ COPY --from=builder /usr/local/bin /usr/local/bin
 # Copy app source code and adjust ownership
 COPY --chown=backend:backend backend/ .
 
+# Ensure the entrypoint script has Linux line endings and is executable
+RUN sed -i 's/\r$//' docker-entrypoint.sh && \
+    chmod +x docker-entrypoint.sh
+
 # Direct Hugging Face model downloads to the persistent cache directory
-ENV HF_HOME=/app/cache/huggingface \
-    SENTENCE_TRANSFORMERS_HOME=/app/cache/huggingface \
+ENV HF_HOME=/app/data/huggingface \
+    SENTENCE_TRANSFORMERS_HOME=/app/data/huggingface \
     PYTHONUNBUFFERED=1
 
-USER backend
+# Container starts as root to configure volume permissions in the entrypoint,
+# dropping privileges to the backend user before running uvicorn.
+# Therefore, USER directive is commented out to run entrypoint as root.
+# USER backend
+
+ENTRYPOINT ["./docker-entrypoint.sh"]
 
 EXPOSE 8000
 
