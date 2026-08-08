@@ -60,12 +60,13 @@ ENV HF_HOME=/app/cache/huggingface \
     SENTENCE_TRANSFORMERS_HOME=/app/cache/huggingface \
     PYTHONUNBUFFERED=1
 
+USER backend
+
 EXPOSE 8000
 
 # Docker healthcheck that queries the lightweight healthz endpoint dynamically
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
     CMD python -c "import os, urllib.request; urllib.request.urlopen('http://localhost:' + os.environ.get('PORT', '8000') + '/healthz', timeout=5)"
 
-# Start as root so Railway's mounted volume can be prepared,
-# then drop privileges and run the application as the backend user.
-CMD ["sh", "-c", "mkdir -p /app/data/uploads /app/data/vector_store /app/data/huggingface && chown backend:backend /app/data /app/data/uploads /app/data/vector_store /app/data/huggingface && exec su -s /bin/sh backend -c 'exec uvicorn main:app --host 0.0.0.0 --port ${PORT:-8000}'"]
+# Start uvicorn dynamically binding to Railway assigned port (fallback to 8000)
+CMD ["sh", "-c", "uvicorn main:app --host 0.0.0.0 --port ${PORT:-8000}"]
