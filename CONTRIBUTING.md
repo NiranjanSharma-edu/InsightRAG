@@ -90,20 +90,18 @@ We follow semantic commit message guidelines. Write commit messages in the **imp
 
 ---
 
-## 🤝 Pull Request Process
+## 🤝 Pull Request & CI/CD Process
 
 1. **Fork and Branch**: Fork the repository, create a new branch from `main`, and implement your changes.
-2. **Local Testing**: Verify that all core functionality is working. If you've modified backend code, run tests using:
+2. **Environment Variables**: Local configuration is driven by the `.env` file at the root. Copy from `.env.example` to start. **Never commit the `.env` file or any credentials/secrets to GitHub.**
+3. **Local Testing**: Verify that all core functionality is working. If you have modified backend code, run tests using:
    ```bash
    cd backend
-   pytest -v
+   pytest --ignore=cache -v
    ```
-3. **Submit a PR**: Submit a Pull Request targeting our `main` branch. 
-4. **Use the Template**: Fill out the Pull Request Template completely:
-   - Provide a concise summary of your changes.
-   - Link any related issue numbers (e.g. `Closes #123`).
-   - Detail the automated/manual verification you performed.
-   - Include screenshots or recordings of any visual UI changes.
+4. **Automated CI**: Once you push or open a pull request, GitHub Actions automatically executes import checks, lint validations, and Next.js compilation runs.
+5. **Production Docker Images**: Production containers are built and published automatically to the GitHub Container Registry (GHCR) upon merges to `main`. Do not compile or push production Docker containers manually.
+6. **Submit a PR**: Submit a Pull Request targeting our `main` branch and fill out the PR Template completely, referencing any related issue numbers (e.g. `Closes #123`).
 
 ---
 

@@ -1,73 +1,187 @@
 # InsightRAG Architecture & System Design
 
-InsightRAG is an open-source, interview-ready Retrieval-Augmented Generation (RAG) platform. It allows users to query dense PDF documents using natural language with verifiable, grounded citations.
+InsightRAG is an open-source Retrieval-Augmented Generation (RAG) platform that processes technical PDF documents to provide citation-backed answers. This document outlines the application's components, data flows, and deployment architectures.
 
 ---
 
-## 1. System Architecture Overview
+## 1. System Design Principles
 
-```
-                                 FRONTEND (Next.js 14)
-                      ┌──────────────────────────────────────────┐
-                      │  Landing | Upload | Chat | Settings | About│
-                      └────────────────────┬─────────────────────┘
-                                           │ REST API (JSON)
-                                           ▼
-                                   BACKEND (FastAPI)
-      ┌────────────────────────────────────┴────────────────────────────────────┐
-      │                                                                         │
-      ▼                                                                         ▼
-┌──────────────────────────┐                                       ┌──────────────────────────┐
-│   Indexing Pipeline      │                                       │  Retrieval & Generation  │
-├──────────────────────────┤                                       ├──────────────────────────┤
-│ 1. PyMuPDF Loader        │                                       │ 1. User Question         │
-│ 2. Text Chunker          │                                       │ 2. Embedding Query       │
-│ 3. Sentence Transformers │                                       │ 3. FAISS Vector Search   │
-│ 4. FAISS Vector Store    │                                       │ 4. Context Assembly      │
-│ 5. SQLite Metadata DB    │                                       │ 5. LLM Answer Engine     │
-└──────────────────────────┘                                       └──────────────────────────┘
+InsightRAG is designed with the following core engineering principles:
+*   **Separation of Concerns**: Decoupled Next.js client-facing UI and FastAPI server API.
+*   **Local Ingestion Execution**: Embedded embeddings generation and vector indexes running directly within the container runtime to avoid third-party ingestion service dependencies.
+*   **Persistent Isolation**: Hardened privilege separation at boot with persistent volume mounting.
 
 ---
 
-## 2. Containerized Execution & Security Architecture
+## 2. Ingestion & RAG Ingestion Flow
 
-InsightRAG is packaged using optimized Docker multi-stage builds ensuring isolation, high security, and minimal footprint:
-- **Runtimes**: FastAPI backend runs on `python:3.12-slim` and frontend runs on `node:20-alpine`.
-- **Privilege Separation**: Containers run under restricted, non-root users (`backend` and `nextjs`) conforming to the principle of least privilege.
-- **Persistent Storage Volumes**: SQLite databases and vector indices are mounted dynamically at `/app/data`. Model weights are persistent at `/app/cache/huggingface` to prevent dynamic Hugging Face hub API calls during restarts.
+The application executes a structured pipeline to convert uploaded documents into searchable context:
+
+```text
+[PDF Upload]
+     ↓ (HTTP POST /documents/upload)
+[Text Ingestion]
+     ↓ (PyMuPDF extracts raw text and preserves page boundaries)
+[Text Chunking]
+     ↓ (Sliding window cuts overlapping segments based on configuration)
+[Vector Generation]
+     ↓ (SentenceTransformers embeds chunks into 384-dimensional dense vectors)
+[FAISS Indexing]
+     ↓ (L2 normalized vectors stored in FAISS flat index)
+[Context Retrieval]
+     ↓ (Cosine similarity retrieval matches top context vectors)
+[Response Synthesis]
+     ↓ (LLM formats answers citing exact source document page numbers)
 ```
 
 ---
 
-## 3. Ingestion & Indexing Pipeline Flow
+## 3. Technology Stack & Component Responsibilities
 
-1. **PDF Upload & Storage**:
-   - PDF files uploaded via `POST /documents/upload` are stored in `backend/data/uploads/`.
-   - File metadata is registered in SQLite (`documents` table).
+InsightRAG consists of several major layers working in tandem:
 
-2. **Text Extraction (`rag/loader.py`)**:
-   - `PyMuPDF` (`fitz`) extracts clean string text page by page.
-   - Preserves exact page numbers (1-indexed) and char lengths.
-
-3. **Text Chunking (`rag/chunker.py`)**:
-   - Performs recursive sliding window chunking using `chunk_size` (default: 500 chars) and `chunk_overlap` (default: 50 chars).
-   - Generates chunk records with metadata (`page_number`, `start_char`, `end_char`).
-
-4. **Dense Vector Embeddings (`rag/embeddings.py`)**:
-   - Encodes text chunks into 384-dimensional dense vectors using `SentenceTransformers` (`all-MiniLM-L6-v2`).
-   - L2 normalizes vectors for fast Cosine Similarity calculation.
-
-5. **Vector Indexing (`rag/vector_store.py`)**:
-   - Inserts vectors into FAISS `IndexFlatIP`.
-   - Persists FAISS binary index to `backend/data/vector_store/faiss.index` and metadata array to `faiss_metadata.json`.
+| Component | Technology | Responsibility |
+| :--- | :--- | :--- |
+| **Next.js Frontend** | Next.js 14.2.5 (React 18 / TS) | Renders the dashboard UI, chat conversation threads, upload forms, and citation preview modals. |
+| **API Client** | Typed Fetch-based utility | Handles client-to-API network requests, headers, and type validation. |
+| **FastAPI Backend** | FastAPI (Python 3.12) | Exposes REST endpoints, validates schemas via Pydantic, and coordinates SQLite/FAISS services. |
+| **PyMuPDF (`fitz`)** | PyMuPDF | Extracts text contents page-by-page from raw uploaded PDF files. |
+| **Text Chunker** | Sliding Window algorithm | Segments parsed text into smaller chunks based on configurable size and overlap parameters. |
+| **SentenceTransformers** | `all-MiniLM-L6-v2` | Encodes chunk snippets locally into 384-dimensional vector coordinate arrays. |
+| **FAISS Vector Store** | `IndexFlatIP` | Indexes normalized embeddings and performs fast cosine similarity lookups. |
+| **LLM Providers** | OpenAI / Gemini / Groq / Ollama | Generates natural language answers strictly grounded in context snippets. |
+| **SQLite Database** | SQLite & SQLAlchemy ORM | Maintains relational records of documents, processing states, chunks, and metadata. |
+| **Railway Volume** | Attached Cloud Volume (5GB) | Hosts persistent directories for uploads, indices, database files, and Hugging Face model weights. |
+| **GHCR** | GitHub Container Registry | Serves as the repository's production Docker image registry. |
 
 ---
 
-## 4. Retrieval & Generation Pipeline Flow
+## 4. Local vs. Production Architectures
 
-1. **User Query**: User submits question via `/chat` page.
-2. **Query Vector Encoding**: `EmbeddingService` generates 384D query vector.
-3. **Similarity Search**: `FAISSVectorStore` conducts top-K inner product search over vector index.
-4. **Prompt Building (`rag/prompt_builder.py`)**: Assembles prompt with strict system instructions and context passages tagged with Document Name and Page Number.
-5. **LLM Generation (`rag/generator.py`)**: Provider (OpenAI, Groq, Gemini, Ollama, or Mock Offline) returns a grounded answer.
-6. **Citation Formatting**: Response includes citation objects linking answer text directly to source PDF pages.
+### Local Development Architecture (Docker Compose)
+In the local development environment, all processes are executed inside a local Docker network (`insightrag-dev`). Directories are mounted into the containers to support hot-reloading.
+
+```mermaid
+graph TD
+    User([Client Browser])
+    
+    subgraph Docker Network: insightrag-dev
+        subgraph Frontend Container: Next.js Node 20-alpine
+            App[Next.js App Router UI]
+            Client[API Client Utility]
+        end
+        
+        subgraph Backend Container: FastAPI Python 3.12-slim
+            API[FastAPI Router]
+            Loader[PyMuPDF Loader]
+            Chunker[Sliding Window Chunker]
+            Embed[SentenceTransformers Embedder]
+            Retriever[FAISS Similarity Search]
+            Generator[LLM Generation Engine]
+        end
+    end
+    
+    subgraph Local Volume Mounts
+        DataVol[(SQLite DB / FAISS Store: ./backend/data)]
+        CacheVol[(Hugging Face Cache: ./backend/cache)]
+    end
+    
+    subgraph External
+        LLMAPIs{External LLM Providers}
+    end
+
+    User -->|HTTP/JSON: port 3000| App
+    App --> Client
+    Client -->|HTTP/JSON: port 8000| API
+    
+    API --> Loader
+    Loader --> Chunker
+    Chunker --> Embed
+    
+    Embed -->|Check Local Models| CacheVol
+    Embed --> Retriever
+    
+    Retriever -->|Read/Write Indices| DataVol
+    API -->|Write metadata| DataVol
+    
+    Retriever --> Generator
+    Generator -->|Query Responses| LLMAPIs
+    
+    classDef container fill:#f9f,stroke:#333,stroke-width:2px;
+    classDef volume fill:#bbf,stroke:#333,stroke-width:2px;
+    class App,API container;
+    class DataVol,CacheVol volume;
+```
+
+### Production Cloud Architecture (Railway)
+In production, the frontend and backend operate as decoupled, standalone cloud services on Railway. The backend service mounts a persistent Railway volume to `/app/data` to host database records and index binaries.
+
+```mermaid
+graph TD
+    User([Client Browser])
+
+    subgraph Railway["Railway Production Environment"]
+        subgraph Frontend["Frontend Service - Next.js"]
+            App[Next.js App Router UI]
+            Client[Typed API Client]
+        end
+
+        subgraph Backend["Backend Service - FastAPI"]
+            API[FastAPI Router]
+            Loader[PyMuPDF PDF Loader]
+            Chunker[Sliding Window Chunker]
+            Embed[SentenceTransformers Embedder]
+            Retriever[FAISS Similarity Search]
+            Generator[LLM Generation Engine]
+        end
+
+        Volume[(Persistent Railway Volume)]
+    end
+
+    subgraph External["External Services"]
+        LLMAPIs{LLM Providers}
+        GHCR[GitHub Container Registry]
+    end
+
+    User -->|HTTPS| App
+    App --> Client
+    Client -->|HTTPS API Requests| API
+
+    API --> Loader
+    Loader --> Chunker
+    Chunker --> Embed
+    Embed --> Retriever
+    Retriever --> Generator
+
+    API -->|Metadata / Uploads| Volume
+    Retriever -->|FAISS Index| Volume
+    Embed -->|Model Cache| Volume
+
+    Generator -->|LLM API Requests| LLMAPIs
+
+    GHCR -->|Production Images| Frontend
+    GHCR -->|Production Images| Backend
+```
+
+---
+
+## 5. Production Request Flow
+
+When an end-user submits a prompt or uploads a document in production, execution triggers the following sequential loop:
+
+1.  **Request Dispatch**: The user browser makes HTTPS requests to the frontend UI (`https://insightrag.up.railway.app`).
+2.  **API Routing**: The UI invokes network requests via the API client pointing to the backend API (`https://insightrag-backend-production.up.railway.app`).
+3.  **Document Ingestion**:
+    *   For document uploads: Text is extracted via PyMuPDF, segmented by the sliding-window chunker, converted to dense embeddings vectors using SentenceTransformers, and written into the SQLite database and FAISS index stored on the persistent Railway volume (`/app/data`).
+4.  **Retrieval & LLM Formulation**:
+    *   For chat queries: The question is converted into a 384D query vector, searched against the FAISS index, and the top relevant metadata chunks are formatted into a grounded prompt context.
+5.  **Answer Synthesis**: The backend issues an HTTPS call to the configured LLM provider (OpenAI, Gemini, or Groq) to synthesize an answer referencing source document page numbers.
+6.  **Citation Rendering**: The JSON response payload is parsed by the frontend client to render page-level inline badges and display text preview modals.
+
+---
+
+## 6. Future Architectural Roadmap
+
+Planned improvements for scalability and monitoring include:
+*   **Phase 2.4 (Security & Monitoring)**: Automate CVE image vulnerability scans in the GHA pipelines, add production application logs, and configure metrics monitoring.
+*   **Phase 3 (Production Scaling)**: Migrate SQLite metadata to a standalone PostgreSQL database, move vector indexes to a distributed vector store, and optimize index tree traversal.

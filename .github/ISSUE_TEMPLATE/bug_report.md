@@ -26,7 +26,7 @@ Provide a clear description of what you expected to happen.
 
 Please specify the environment details:
 - **Operating System**: (e.g. Windows 11, macOS Sequoia, Ubuntu 22.04)
-- **Execution Mode**: (e.g. Local Direct host, Docker Compose Dev, Docker Compose Prod)
+- **Execution Mode**: (e.g. Local Direct host, Docker Compose Dev, Docker Compose Prod, Production Railway)
 - **Node.js Version**: (if running on host, e.g. v20.15.0)
 - **Python Version**: (if running on host, e.g. v3.12.3)
 - **Browser (if frontend issue)**: (e.g. Chrome 124, Firefox 125)

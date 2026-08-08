@@ -38,3 +38,23 @@ Instead, please report vulnerabilities by contacting the maintainer via:
 3. **Patching**: We aim to resolve verified vulnerabilities within **15 days** of receipt.
 4. **Release**: Once a patch is available and verified, we will release it in a new repository version.
 5. **Credit**: We will credit you for your responsible disclosure in our security announcements or changelogs, unless you request to remain anonymous.
+
+---
+
+## Security Architecture & Practices
+
+### Implemented Controls
+- **Non-Root Runtime Execution**: Container processes execute under dedicated, unprivileged system accounts (`backend` and `nextjs` users) to restrict sandbox boundaries.
+- **Privilege Separation Entrypoint**: The backend container boots as `root` to set ownership permissions on dynamically mounted paths and instantly drops privileges to the unprivileged `backend` user via `gosu` before server execution.
+- **Secret Management Protection**: Local secrets are configured exclusively within Git-ignored `.env` configurations. Production credentials/keys are managed via Railway's deployment environment variables.
+- **Least-Privilege GitHub Actions Tokens**: Continuous integration workflows run with explicit read-only token scopes:
+  ```yaml
+  permissions:
+    contents: read
+  ```
+
+### Planned Controls (Upcoming Phase 2.4)
+- **Automated CVE Scanning**: Continuous container vulnerability assessments via image scanners (e.g., Trivy/Anchore).
+- **Production Logging & Monitoring**: Remote security event monitoring.
+- **API Hardening**: Rate-limiting constraints and secure header profiles.
+

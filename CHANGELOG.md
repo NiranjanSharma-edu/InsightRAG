@@ -4,6 +4,24 @@ All notable changes to the InsightRAG project will be documented in this file. T
 
 ---
 
+## [1.1.0] - 2026-08-09
+
+### Added
+- **Phase 2.1: GitHub Actions CI**
+  - Integrated automated continuous integration validation workflows (`ci.yml`) triggering on pushes and pull requests to all branches.
+  - Implemented backend FastAPI code quality checks, import validation, and frontend Next.js compilation validation.
+  - Set up automated Docker production image build tests with custom build args.
+- **Phase 2.2: GitHub Container Registry**
+  - Set up secure automated multi-platform production Docker image compilation and publishing (`publish-ghcr.yml`) targeting GitHub Container Registry (GHCR).
+  - Pushed immutable containers tagged with Git commit SHAs and `latest` tags for backend (`ghcr.io/niranjansharma-edu/insightrag-backend`) and frontend (`ghcr.io/niranjansharma-edu/insightrag-frontend`).
+- **Phase 2.3: Railway Production Deployment**
+  - Deployed public, production-ready frontend (`https://insightrag.up.railway.app`) and backend (`https://insightrag-backend-production.up.railway.app`) environments on Railway.
+  - Configured persistent cloud volume mounted to `/app/data` to host SQLite databases, document uploads, vector index stores, and model caches.
+  - Configured Railway auto-updates to pull from GHCR and redeploy containers "As soon as ready" on new registry image tag changes.
+  - Hardened backend runtime startup permissions using a privilege-drop entrypoint wrapper (`gosu`) to resolve volume access permissions while executing under a non-root account.
+
+---
+
 ## [1.0.0] - 2026-08-06
 
 ### Added

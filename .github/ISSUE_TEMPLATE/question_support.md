@@ -14,7 +14,7 @@ Provide a clear and detailed explanation of your question or the problem you nee
 
 Please provide information about your setup to help us assist you:
 - **Operating System**: (e.g. Windows, macOS, Linux)
-- **Deployment Method**: (e.g. Host local, Docker Dev, Docker Prod)
+- **Deployment Method**: (e.g. Host local, Docker Dev, Docker Prod, Production Railway)
 
 ## What have you tried so far?
 
